@@ -30,11 +30,14 @@ def generate_https_traffic():
     dest_ip = fake.ipv4_private()
     dest_port = 443
     host = 'www.example.com'
+    session_id = b'\x12\x34\x56\x78'
 
      # Set up the three-way handshake
-    syn = IP(dst=dest_ip) / TCP(dport=dest_port, flags='S')
-    synack = sr1(syn)
-    ack = IP(dst=dest_ip) / TCP(dport=dest_port, flags='A', ack=synack.seq + 1)
+    tls_session = TLS(
+        session_id=session_id,
+        cipher_suites=[TLSCipherSuite.TLS_RSA_WITH_AES_256_CBC_SHA],
+        extensions=[TLSExtension() / TLSExtServerName(servername=dest_ip)]
+    )
 
     # Generate the TLS handshake messages
     client_hello = TLS(
