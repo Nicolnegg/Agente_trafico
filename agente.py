@@ -2,10 +2,13 @@ from scapy.layers.inet import Ether
 from scapy.layers.inet import IP
 from scapy.layers.inet import TCP
 from scapy.layers.tls.all import *
+from scapy.layers.tls.record import *
 from scapy.layers.http import HTTPRequest
 from faker import Faker
 from scapy.all import *
 
+
+import ssl
 import time
 import random
 import string
@@ -25,62 +28,44 @@ def generate_http_traffic():
     http_request.show()
     sendp(http_request)
 
+
 def generate_https_traffic():
     # Definimos los parámetros necesarios para la conexión
-    dest_ip = fake.ipv4_private()
-    dest_port = 443
-    host = 'www.example.com'
-    session_id = b'\x12\x34\x56\x78'
+    ip = IP(dst="www.example.com")
+    tcp = TCP(sport=1234, dport=443)
+    raw = Raw(load=b"GET / HTTPS/1.1\r\nHost: www.example.com\r\n\r\n")
+    packet = ip / tcp / raw
 
-     # Set up the three-way handshake
-    tls_session = TLS(
-        session_id=session_id,
-        cipher_suites=[TLSCipherSuite.TLS_RSA_WITH_AES_256_CBC_SHA],
-        extensions=[TLSExtension() / TLSExtServerName(servername=dest_ip)]
-    )
+    # Cifrar la carga útil usando TLS
+    tls_payload = TLS(packet[Raw].load)
 
-    # Generate the TLS handshake messages
-    client_hello = TLS(
-        record=TLS(
-            handshake=TLS(
-                client_hello=TLSClientHello(
-                    version="TLS_1_2",
-                    cipher_suites=[
-                        0x9C,  # TLS_RSA_WITH_AES_128_CBC_SHA
-                    ],
-                    extensions=[
-                        TLS_Ext_ServerName(servername=host),
-                        TLS_Ext_SupportedGroups(groups=[23]),  # secp256r1
-                        TLS_Ext_ECPointsFormat(ec_point_formats=[0]),  # uncompressed
-                        TLS_Ext_SignatureAlgorithms(signature_algorithms=[0x0401])  # sha256 + rsa
-                    ]
-                )
-            )
-        )
-    )
+    # Crear un nuevo paquete con la carga útil cifrada
+    tls_packet = IP(dst="www.example.com") / TCP(sport=1234, dport=443) / tls_payload
 
-    # Send the TLS handshake messages
-    client_hello.show()
-    send(ack / client_hello)
+    # Enviar el paquete cifrado
+    tls_packet.show2()
+    send(tls_packet)
 
-    # Close the connection with a FIN
-    fin = IP(dst=dest_ip) / TCP(dport=dest_port, flags='FA', seq=ack.ack, ack=synack.seq + 1)
-    send(fin)
+    # Send the packet
+    scapy.all.sendp(packet)
+    
+def generate_ssh_traffic():
+    # Crear una solicitud SSH
+    ssh_request = scapy.all.Ether()/scapy.all.IP(dst="10.0.0.2")/scapy.all.TCP(dport=22, flags="S")
+    ssh_request.show()
+    scapy.all.sendp(ssh_request)
 
-# def generate_ssh_traffic():
-#     # Crear una solicitud SSH
-#     ssh_request = scapy.all.Ether()/scapy.all.IP(dst="10.0.0.2")/scapy.all.TCP(dport=22, flags="S")
-#     scapy.all.sendp(ssh_request)
+def generate_mail_traffic():
+    # Crear una solicitud de correo electrónico
+    dst_ip = fake.ipv4_private()
+    mail_request = scapy.all.Ether()/scapy.all.IP(dst=dst_ip)/scapy.all.TCP(dport=25)/scapy.all.Raw(load="HELO example.com\r\nMAIL FROM: user@example.com\r\nRCPT TO: user2@example.com\r\nDATA\r\nSubject: prueba de correo electrónico\r\nEste es un mensaje de prueba.\r\n.\r\nQUIT\r\n")
+    scapy.all.sendp(mail_request)
 
-# def generate_mail_traffic():
-#     # Crear una solicitud de correo electrónico
-#     mail_request = scapy.all.Ether()/scapy.all.IP(dst="mail.example.com")/scapy.all.TCP(dport=25)/scapy.all.Raw(load="HELO example.com\r\nMAIL FROM: user@example.com\r\nRCPT TO: user2@example.com\r\nDATA\r\nSubject: prueba de correo electrónico\r\nEste es un mensaje de prueba.\r\n.\r\nQUIT\r\n")
-#     scapy.sendp(mail_request)
-
-# def generate_ftp_traffic():
-#     # Crear una solicitud FTP
-#     ftp_request = scapy.all.Ether()/scapy.all.IP(dst="ftp.example.com")/scapy.all.TCP(dport=21)/scapy.all.Raw(load="USER anonymous\r\nPASS anonymous\r\nLIST\r\nQUIT\r\n")
-#     scapy.sendp(ftp_request)
+def generate_ftp_traffic():
+    # Crear una solicitud FTP
+    dst_ip = fake.ipv4_private()
+    ftp_request = scapy.all.Ether()/scapy.all.IP(dst=dst_ip)/scapy.all.TCP(dport=21)/scapy.all.Raw(load="USER anonymous\r\nPASS anonymous\r\nLIST\r\nQUIT\r\n")
+    scapy.all.sendp(ftp_request)
 
 def generate_traffic():
     # Generar tráfico aleatorio
