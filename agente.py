@@ -1,17 +1,10 @@
-from scapy.layers.inet import Ether
-from scapy.layers.inet import IP
-from scapy.layers.inet import TCP
-from scapy.layers.tls.all import *
-from scapy.layers.tls.record import *
 from scapy.layers.http import HTTPRequest
 from faker import Faker
 from scapy.all import *
 
-
-import ssl
+import requests
 import time
 import random
-import string
 
 
 def generate_http_traffic():
@@ -30,24 +23,12 @@ def generate_http_traffic():
 
 
 def generate_https_traffic():
-    # Definimos los parámetros necesarios para la conexión
-    ip = IP(dst="www.example.com")
-    tcp = TCP(sport=1234, dport=443)
-    raw = Raw(load=b"GET / HTTPS/1.1\r\nHost: www.example.com\r\n\r\n")
-    packet = ip / tcp / raw
 
-    # Cifrar la carga útil usando TLS
-    tls_payload = TLS(packet[Raw].load)
-
-    # Crear un nuevo paquete con la carga útil cifrada
-    tls_packet = IP(dst="www.example.com") / TCP(sport=1234, dport=443) / tls_payload
-
-    # Enviar el paquete cifrado
-    tls_packet.show2()
-    send(tls_packet)
-
-    # Send the packet
-    scapy.all.sendp(packet)
+    fake = Faker()
+    url = "https://" + fake.domain_name()
+    response = requests.get('https://www.google.com', verify=True)
+    print(response.content)
+    
     
 def generate_ssh_traffic():
     # Crear una solicitud SSH
@@ -91,8 +72,7 @@ def generate_traffic():
 fake = Faker()
 if __name__ == "__main__":
     traffic_interval = 10 # tiempo entre cada generación de tráfico, en segundos
-    while True:
-        
+    while True:       
         
         generate_https_traffic()
         time.sleep(traffic_interval) 
