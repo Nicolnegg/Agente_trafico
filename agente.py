@@ -7,6 +7,36 @@ import time
 import random
 import paramiko
 
+def generate_ssh_traffic(tiempo_deseadofuncion):
+    tiempo_iniciofuncion = time.time()
+
+    while time.time() - tiempo_iniciofuncion < tiempo_deseadofuncion:
+        # Crear una solicitud SSH
+        # Crea una sesión SSH utilizando la biblioteca Paramiko
+        ssh = paramiko.SSHClient()
+        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        #coneccion al servidor 
+        #-------------------------------------------------cambiar estos valores----------------------------------------------------------
+        ssh.connect('us01.vpnhack.xyz', username='vpnhack-root', password='123')
+        #-------------------------------------------------------------------------------------------------------------------------------
+        # tiempo de espera
+        espera = random.randint(10, 30)
+        time.sleep(espera) 
+        # enviar comando a través de la conexión SSH
+        comado= random.randint(1, 5)
+        if comado == 1:
+            stdin, stdout, stderr = ssh.exec_command('pwd')
+        elif comado == 2:
+            stdin, stdout, stderr = ssh.exec_command('cd')
+        elif comado == 3:
+            stdin, stdout, stderr = ssh.exec_command('mkdir')
+        elif comado == 4:
+            stdin, stdout, stderr = ssh.exec_command('cp')
+        else:
+            stdin, stdout, stderr = ssh.exec_command('ls')
+        # cerrar la conexión SSH
+        ssh.close()
+        #filtro ssh
 
 def getHttp(dst_ip):
 
@@ -96,23 +126,6 @@ def generate_https_traffic(tiempo_deseadofuncion):
         #filtro http
         #filtro tls.handshake.type == 1 and tcp.port == 443 and ssl.handshake.extensions_server_name == "www.example.com"
     
-def generate_ssh_traffic(tiempo_deseadofuncion):
-    tiempo_iniciofuncion = time.time()
-
-    while time.time() - tiempo_iniciofuncion < tiempo_deseadofuncion:
-        # Crear una solicitud SSH
-        # Crea una sesión SSH utilizando la biblioteca Paramiko
-        ssh = paramiko.SSHClient()
-        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        ssh.connect('us01.vpnhack.xyz', username='vpnhack-root', password='123')
-        # tiempo de espera
-        espera = random.randint(10, 30)
-        time.sleep(espera) 
-        # enviar comando a través de la conexión SSH
-        stdin, stdout, stderr = ssh.exec_command('ls')
-        # cerrar la conexión SSH
-        ssh.close()
-        #filtro ssh
 
 def generate_mail_traffic(tiempo_deseadofuncion):
     tiempo_iniciofuncion = time.time()
