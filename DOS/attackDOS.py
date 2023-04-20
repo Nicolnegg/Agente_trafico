@@ -3,10 +3,10 @@ from faker import Faker
 
 conf.verb = 0
 
-host = "192.168.137.6"
+host = "192.168.0.7"
 port = 80
 
-origenIP = "192.168.137."
+origenIP = "192.168.0."
 endIP = 10
 
 packet_number = 0
